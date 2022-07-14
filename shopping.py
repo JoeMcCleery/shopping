@@ -6,6 +6,20 @@ from sklearn.neighbors import KNeighborsClassifier
 
 TEST_SIZE = 0.4
 
+MONTH = {
+    "Jan": 0,
+    "Feb": 1,
+    "Mar": 2,
+    "April": 3,
+    "May": 4,
+    "June": 5,
+    "Jul": 6,
+    "Aug": 7,
+    "Sep": 8,
+    "Oct": 9,
+    "Nov": 10,
+    "Dec": 11
+}
 
 def main():
 
@@ -59,7 +73,40 @@ def load_data(filename):
     labels should be the corresponding list of labels, where each label
     is 1 if Revenue is true, and 0 otherwise.
     """
-    raise NotImplementedError
+    evidence = []
+    labels = []
+    # Open csv file and loop rows
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        skip_header = True
+        for row in csv_reader:
+            # Skip header row
+            if skip_header:
+                skip_header = False
+                continue
+            # Add new evidence for entry
+            evidence.append([
+                int(row[0]),                                    # Administrative
+                float(row[1]),                                  # Administrative_Duration
+                int(row[2]),                                    # Informational
+                float(row[3]),                                  # Informational_Duration
+                int(row[4]),                                    # ProductRelated
+                float(row[5]),                                  # ProductRelated_Duration
+                float(row[6]),                                  # BounceRates
+                float(row[7]),                                  # ExitRates
+                float(row[8]),                                  # PageValues
+                float(row[9]),                                  # SpecialDay
+                MONTH[row[10]],                                 # Month
+                int(row[11]),                                   # OperatingSystems
+                int(row[12]),                                   # Browser
+                int(row[13]),                                   # Region
+                int(row[14]),                                   # TrafficType
+                1 if row[15] == "Returning_Visitor" else 0,     # VisitorType
+                1 if row[16] == "TRUE" else 0,                  # Weekend
+            ])
+            # Add new label for entry
+            labels.append(1 if row[17] == "TRUE" else 0)
+    return evidence, labels
 
 
 def train_model(evidence, labels):
@@ -67,8 +114,10 @@ def train_model(evidence, labels):
     Given a list of evidence lists and a list of labels, return a
     fitted k-nearest neighbor model (k=1) trained on the data.
     """
-    raise NotImplementedError
-
+    # Create model
+    model = KNeighborsClassifier(n_neighbors=1)
+    # Train and return model
+    return model.fit(evidence, labels)
 
 def evaluate(labels, predictions):
     """
@@ -85,7 +134,27 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    real_true = 0
+    correct_true = 0
+    real_false = 0
+    correct_false = 0
+    # Loop real and predicted labels
+    for real, predicted in zip(labels, predictions):
+        # Sum real true
+        real_true += real
+        # Sum real false
+        real_false += 1 - real
+        # If prediction is correct
+        if real == predicted:
+            # If real was true
+            if real == 1:
+                # Add to correct true
+                correct_true += 1
+            else:
+                # Add to correct false
+                correct_false += 1
+    # Calc and return values
+    return correct_true / real_true, correct_false / real_false
 
 
 if __name__ == "__main__":
